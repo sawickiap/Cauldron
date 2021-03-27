@@ -23,35 +23,25 @@
 
 namespace CAULDRON_VK
 {    
-    bool DeviceProperties::IsExtensionPresent(const char *pExtName)
-    {
-        return std::find_if(
-            m_deviceExtensionProperties.begin(),
-            m_deviceExtensionProperties.end(),
-            [pExtName](const VkExtensionProperties& extensionProps) -> bool {
-            return strcmp(extensionProps.extensionName, pExtName) == 0;
-        }) != m_deviceExtensionProperties.end();
-    }
-
     VkResult DeviceProperties::Init(VkPhysicalDevice physicaldevice)
     {   
         m_physicaldevice = physicaldevice;
 
-        // Enumerate device extensions
-        //
-        uint32_t extensionCount;
-        VkResult res = vkEnumerateDeviceExtensionProperties(physicaldevice, nullptr, &extensionCount, NULL);
-        m_deviceExtensionProperties.resize(extensionCount);
-        res = vkEnumerateDeviceExtensionProperties(physicaldevice, nullptr, &extensionCount, m_deviceExtensionProperties.data());
-
-        return res;
+        m_deviceInitHelp.GetPhysicalDeviceFeatures(physicaldevice);
+        VkResult res = m_deviceInitHelp.EnumerateExtensions(physicaldevice);
+        if(res != VK_SUCCESS)
+        {
+            return res;
+        }
+        m_deviceInitHelp.EnableAllExtensions(false);
+        m_deviceInitHelp.EnableAllFeatureStructs(false);
+        return VK_SUCCESS;
     }
 
     bool DeviceProperties::AddDeviceExtensionName(const char *deviceExtensionName)
     {
-        if (IsExtensionPresent(deviceExtensionName))
+        if(m_deviceInitHelp.EnableExtension(deviceExtensionName, true))
         {
-            m_device_extension_names.push_back(deviceExtensionName);
             return true;
         }
 
@@ -59,11 +49,4 @@ namespace CAULDRON_VK
 
         return false;
     }
-
-    void  DeviceProperties::GetExtensionNamesAndConfigs(std::vector<const char *> *pDevice_extension_names)
-    {
-        for (auto &name : m_device_extension_names)
-            pDevice_extension_names->push_back(name);
-    }
-
 }

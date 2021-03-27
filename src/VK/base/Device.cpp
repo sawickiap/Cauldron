@@ -190,8 +190,7 @@ namespace CAULDRON_VK
         }
 
         // prepare existing extensions names into a buffer for vkCreateDevice
-        std::vector<const char *> extension_names;
-        pDp->GetExtensionNamesAndConfigs(&extension_names);
+        pDp->m_deviceInitHelp.PrepareCreation();
 
         // Create device 
         //
@@ -233,8 +232,8 @@ namespace CAULDRON_VK
         device_info.pNext = &physicalDeviceFeatures2;
         device_info.queueCreateInfoCount = 2;
         device_info.pQueueCreateInfos = queue_info;
-        device_info.enabledExtensionCount = (uint32_t)extension_names.size();
-        device_info.ppEnabledExtensionNames = device_info.enabledExtensionCount ? extension_names.data() : NULL;
+        device_info.enabledExtensionCount = pDp->m_deviceInitHelp.GetEnabledExtensionCount();
+        device_info.ppEnabledExtensionNames = pDp->m_deviceInitHelp.GetEnabledExtensionNames();
         device_info.pEnabledFeatures = NULL;
         res = vkCreateDevice(m_physicaldevice, &device_info, NULL, &m_device);
         assert(res == VK_SUCCESS);

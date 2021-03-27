@@ -19,28 +19,23 @@
 #pragma once
 
 #include "vulkan/vulkan.h"
+#include "VkExtensionsFeaturesHelp.hpp"
 
 namespace CAULDRON_VK
 {
     class DeviceProperties
     {
         VkPhysicalDevice m_physicaldevice;
-
-        std::vector<const char *> m_device_extension_names;
-
-        std::vector<VkExtensionProperties> m_deviceExtensionProperties;
-
-
         void *m_pNext = NULL;
 public:
+        VKEFH::DeviceInitHelp m_deviceInitHelp;
+
         VkResult Init(VkPhysicalDevice physicaldevice);
-        bool IsExtensionPresent(const char *pExtName);
         bool AddDeviceExtensionName(const char *deviceExtensionName);
         void *GetNext() { return m_pNext; }
         void SetNewNext(void *pNext) { m_pNext = pNext; }
 
         VkPhysicalDevice GetPhysicalDevice() { return m_physicaldevice; }
-        void GetExtensionNamesAndConfigs(std::vector<const char *> *pDevice_extension_names);
 private:
     };
 }
