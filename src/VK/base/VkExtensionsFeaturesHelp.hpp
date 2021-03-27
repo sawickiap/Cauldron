@@ -9,13 +9,6 @@
 namespace VKEFH
 {
 
-template<typename MainT, typename NewT>
-inline void PnextChainPushFront(MainT* mainStruct, NewT* newStruct)
-{
-    newStruct->pNext = (decltype(newStruct->pNext))mainStruct->pNext;
-    mainStruct->pNext = (decltype(mainStruct->pNext))newStruct;
-}
-
 struct EnabledItem
 {
     const char* m_Name;
@@ -466,8 +459,8 @@ public:
             if(m_FeatureStructs[structIndex].m_Enabled)
             {
                 assert(m_FeatureStructs[structIndex].m_StructPtr->sType == m_FeatureStructs[structIndex].m_sType);
-                m_FeatureStructs[structIndex].m_StructPtr->pNext = nullptr;
-                PnextChainPushFront(&m_Features2, m_FeatureStructs[structIndex].m_StructPtr);
+                m_FeatureStructs[structIndex].m_StructPtr->pNext = (VkBaseInStructure*)m_Features2.pNext;
+                m_Features2.pNext = m_FeatureStructs[structIndex].m_StructPtr;
             }
         }
 
@@ -496,8 +489,8 @@ public:
             if(m_FeatureStructs[structIndex].m_Enabled)
             {
                 assert(m_FeatureStructs[structIndex].m_StructPtr->sType == m_FeatureStructs[structIndex].m_sType);
-                m_FeatureStructs[structIndex].m_StructPtr->pNext = nullptr;
-                PnextChainPushFront(&m_Features2, m_FeatureStructs[structIndex].m_StructPtr);
+                m_FeatureStructs[structIndex].m_StructPtr->pNext = (VkBaseInStructure*)m_Features2.pNext;
+                m_Features2.pNext = m_FeatureStructs[structIndex].m_StructPtr;
             }
         }
         
