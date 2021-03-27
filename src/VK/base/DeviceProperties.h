@@ -26,14 +26,11 @@ namespace CAULDRON_VK
     class DeviceProperties
     {
         VkPhysicalDevice m_physicaldevice;
-        void *m_pNext = NULL;
 public:
         VKEFH::DeviceInitHelp m_deviceInitHelp;
 
         VkResult Init(VkPhysicalDevice physicaldevice);
         bool AddDeviceExtensionName(const char *deviceExtensionName);
-        void *GetNext() { return m_pNext; }
-        void SetNewNext(void *pNext) { m_pNext = pNext; }
 
         VkPhysicalDevice GetPhysicalDevice() { return m_physicaldevice; }
 private:

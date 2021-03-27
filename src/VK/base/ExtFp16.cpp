@@ -25,10 +25,6 @@
 
 namespace CAULDRON_VK
 {
-    static VkPhysicalDeviceFloat16Int8FeaturesKHR FP16Features = {};
-    static VkPhysicalDevice16BitStorageFeatures Storage16BitFeatures = {};
-
-
     bool ExtFp16CheckExtensions(DeviceProperties *pDP)
     {
         std::vector<const char *> required_extension_names = { VK_KHR_16BIT_STORAGE_EXTENSION_NAME, VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME };
@@ -47,35 +43,17 @@ namespace CAULDRON_VK
         if (bFp16Enabled)
         {
             // Query 16 bit storage
-            Storage16BitFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES;
-
-            VkPhysicalDeviceFeatures2 features = {};
-            features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-            features.pNext = &Storage16BitFeatures;
-            vkGetPhysicalDeviceFeatures2(pDP->GetPhysicalDevice(), &features);
-
-            bFp16Enabled = bFp16Enabled && Storage16BitFeatures.storageBuffer16BitAccess;
-
+            bFp16Enabled = bFp16Enabled && pDP->m_deviceInitHelp.GetVkPhysicalDevice16BitStorageFeatures().storageBuffer16BitAccess;
             // Query 16 bit ops
-            FP16Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR;
-
-            features.pNext = &FP16Features;
-            vkGetPhysicalDeviceFeatures2(pDP->GetPhysicalDevice(), &features);
-
-            bFp16Enabled = bFp16Enabled && FP16Features.shaderFloat16;
+            bFp16Enabled = bFp16Enabled && pDP->m_deviceInitHelp.GetVkPhysicalDeviceFloat16Int8FeaturesKHR().shaderFloat16;
         }
 
         if (bFp16Enabled)
         {
             // Query 16 bit storage
-            Storage16BitFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES;
-            Storage16BitFeatures.pNext = pDP->GetNext();
-
+            pDP->m_deviceInitHelp.EnableFeatureStruct(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES, true);
             // Query 16 bit ops
-            FP16Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR;
-            FP16Features.pNext = &Storage16BitFeatures;
-
-            pDP->SetNewNext(&FP16Features);
+            pDP->m_deviceInitHelp.EnableFeatureStruct(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR, true);
         }
 
         return bFp16Enabled;

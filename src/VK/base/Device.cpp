@@ -217,19 +217,14 @@ namespace CAULDRON_VK
 
         // enable feature to support fp16 with subgroup operations
         //
-        VkPhysicalDeviceShaderSubgroupExtendedTypesFeaturesKHR shaderSubgroupExtendedType = {};
-        shaderSubgroupExtendedType.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_EXTENDED_TYPES_FEATURES_KHR;
-        shaderSubgroupExtendedType.pNext = pDp->GetNext(); //used to be pNext of VkDeviceCreateInfo
-        shaderSubgroupExtendedType.shaderSubgroupExtendedTypes = VK_TRUE;
+        pDp->m_deviceInitHelp.GetVkPhysicalDeviceShaderSubgroupExtendedTypesFeaturesKHR().shaderSubgroupExtendedTypes = VK_TRUE;
+        pDp->m_deviceInitHelp.EnableFeatureStruct(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_EXTENDED_TYPES_FEATURES_KHR, true);
 
-        VkPhysicalDeviceFeatures2 physicalDeviceFeatures2 = {};
-        physicalDeviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-        physicalDeviceFeatures2.features = physicalDeviceFeatures;
-        physicalDeviceFeatures2.pNext = &shaderSubgroupExtendedType;
+        pDp->m_deviceInitHelp.GetFeatures() = physicalDeviceFeatures;
 
         VkDeviceCreateInfo device_info = {};
         device_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-        device_info.pNext = &physicalDeviceFeatures2;
+        device_info.pNext = pDp->m_deviceInitHelp.GetFeaturesChain();
         device_info.queueCreateInfoCount = 2;
         device_info.pQueueCreateInfos = queue_info;
         device_info.enabledExtensionCount = pDp->m_deviceInitHelp.GetEnabledExtensionCount();
