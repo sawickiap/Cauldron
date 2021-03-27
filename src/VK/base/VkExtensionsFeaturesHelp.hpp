@@ -129,10 +129,61 @@ public:
         return !m_Extensions.m_EnabledItemNames.empty() ? m_Extensions.m_EnabledItemNames.data() : nullptr;
     }
 
+    bool IsFeatureStructEnabled(const char* structName) const
+    {
+        const size_t index = FindFeatureStruct(structName);
+        if(index != SIZE_MAX)
+        {
+            return m_FeatureStructs[index].m_Enabled;
+        }
+        assert(0 && "You can query only for feature structs specified in VkExtensionsFeatures.inl.");
+        return false;
+    }
+    void EnableFeatureStruct(const char* structName, bool enabled)
+    {
+        const size_t index = FindFeatureStruct(structName);
+        if(index != SIZE_MAX)
+        {
+            m_FeatureStructs[index].m_Enabled = enabled;
+            return;
+        }
+        assert(0 && "You can enable only feature structs specified in VkExtensionsFeatures.inl.");
+    }
+
+    bool IsFeatureStructEnabled(VkStructureType sType) const
+    {
+        const size_t index = FindFeatureStruct(sType);
+        if(index != SIZE_MAX)
+        {
+            return m_FeatureStructs[index].m_Enabled;
+        }
+        assert(0 && "You can query only for feature structs specified in VkExtensionsFeatures.inl.");
+        return false;
+    }
+    void EnableFeatureStruct(VkStructureType sType, bool enabled)
+    {
+        const size_t index = FindFeatureStruct(sType);
+        if(index != SIZE_MAX)
+        {
+            m_FeatureStructs[index].m_Enabled = enabled;
+            return;
+        }
+        assert(0 && "You can enable only feature structs specified in VkExtensionsFeatures.inl.");
+    }
+
 protected:
     bool m_ExtensionsEnumerated = false;
     bool m_CreationPrepared = false;
     EnabledItemVector m_Extensions;
+
+    struct FeatureStruct
+    {
+        const char* m_Name;
+        VkStructureType m_sType;
+        VkBaseInStructure* m_StructPtr;
+        bool m_Enabled;
+    };
+    std::vector<FeatureStruct> m_FeatureStructs;
 
     void LoadExtensions(const VkExtensionProperties* extProps, size_t extPropCount)
     {
@@ -156,24 +207,65 @@ protected:
         assert(m_ExtensionsEnumerated && "You should call EnumerateExtensions first.");
         m_Extensions.PrepareEnabled();
     }
+
+    size_t FindFeatureStruct(const char* name) const
+    {
+        for(size_t i = 0, count = m_FeatureStructs.size(); i < count; ++i)
+        {
+            if(strcmp(m_FeatureStructs[i].m_Name, name) == 0)
+            {
+                return i;
+            }
+        }
+        return SIZE_MAX;
+    }
+    size_t FindFeatureStruct(VkStructureType sType) const
+    {
+        for(size_t i = 0, count = m_FeatureStructs.size(); i < count; ++i)
+        {
+            if(m_FeatureStructs[i].m_sType == sType)
+            {
+                return i;
+            }
+        }
+        return SIZE_MAX;
+    }
 };
 
 class InstanceInitHelp : public InitHelpBase
 {
-public:
-    InstanceInitHelp()
-    {
-#define VKEFH_INSTANCE_EXTENSION(extensionName)   m_Extensions.m_Items.push_back({(extensionName), false, false});
-#define VKEFH_INSTANCE_LAYER(layerName)   m_Layers.m_Items.push_back({(layerName), false, false});
+#define VKEFH_INSTANCE_EXTENSION(extensionName)
+#define VKEFH_INSTANCE_LAYER(layerName)
+#define VKEFH_INSTANCE_FEATURE_STRUCT(structName, sType) \
+    private: structName m_##structName = { (sType) }; \
+    public: structName& Get##structName() { return m_##structName; }
 #define VKEFH_DEVICE_EXTENSION(extensionName)
 #define VKEFH_DEVICE_FEATURE_STRUCT(structName, sType)
 
 #include "VkExtensionsFeatures.inl"
 
-#undef VKEFH_DEVICE_EXTENSION
-#undef VKEFH_INSTANCE_LAYER
-#undef VKEFH_DEVICE_FEATURE_STRUCT
 #undef VKEFH_INSTANCE_EXTENSION
+#undef VKEFH_INSTANCE_LAYER
+#undef VKEFH_INSTANCE_FEATURE_STRUCT
+#undef VKEFH_DEVICE_EXTENSION
+#undef VKEFH_DEVICE_FEATURE_STRUCT
+
+public:
+    InstanceInitHelp()
+    {
+#define VKEFH_INSTANCE_EXTENSION(extensionName)   m_Extensions.m_Items.push_back({(extensionName), false, false});
+#define VKEFH_INSTANCE_LAYER(layerName)   m_Layers.m_Items.push_back({(layerName), false, false});
+#define VKEFH_INSTANCE_FEATURE_STRUCT(structName, sType)   m_FeatureStructs.push_back({(#structName), (sType), (VkBaseInStructure*)(&m_##structName), true});
+#define VKEFH_DEVICE_EXTENSION(extensionName)
+#define VKEFH_DEVICE_FEATURE_STRUCT(structName, sType)
+
+#include "VkExtensionsFeatures.inl"
+
+#undef VKEFH_INSTANCE_EXTENSION
+#undef VKEFH_INSTANCE_LAYER
+#undef VKEFH_INSTANCE_FEATURE_STRUCT
+#undef VKEFH_DEVICE_EXTENSION
+#undef VKEFH_DEVICE_FEATURE_STRUCT
     }
 
     VkResult EnumerateExtensions()
@@ -236,8 +328,22 @@ public:
     void PrepareCreation()
     {
         assert(m_LayersEnumerated && "You should call EnumerateLayers first.");
+        
         PrepareEnabledExtensionNames();
+        
         m_Layers.PrepareEnabled();
+        
+        m_CreationPNext = nullptr;
+        for(size_t structIndex = 0, structCount = m_FeatureStructs.size(); structIndex < structCount; ++structIndex)
+        {
+            if(m_FeatureStructs[structIndex].m_Enabled)
+            {
+                assert(m_FeatureStructs[structIndex].m_StructPtr->sType == m_FeatureStructs[structIndex].m_sType);
+                m_FeatureStructs[structIndex].m_StructPtr->pNext = m_CreationPNext;
+                m_CreationPNext = m_FeatureStructs[structIndex].m_StructPtr;
+            }
+        }
+
         m_CreationPrepared = true;
     }
 
@@ -251,10 +357,16 @@ public:
         assert(m_CreationPrepared && "You need to call PrepareCreation first.");
         return !m_Layers.m_EnabledItemNames.empty() ? m_Layers.m_EnabledItemNames.data() : nullptr;
     }
+    const void* GetCreationPNext() const
+    {
+        assert(m_CreationPrepared && "You need to call PrepareCreation first.");
+        return m_CreationPNext;
+    }
 
 private:
     bool m_LayersEnumerated = false;
     EnabledItemVector m_Layers;
+    VkBaseInStructure* m_CreationPNext = nullptr;
 
     void LoadLayers(const VkLayerProperties* layerProps, size_t layerPropCount)
     {
@@ -276,6 +388,7 @@ class DeviceInitHelp : public InitHelpBase
 {
 #define VKEFH_INSTANCE_EXTENSION(extensionName)
 #define VKEFH_INSTANCE_LAYER(layerName)
+#define VKEFH_INSTANCE_FEATURE_STRUCT(structName, sType)
 #define VKEFH_DEVICE_EXTENSION(extensionName)
 #define VKEFH_DEVICE_FEATURE_STRUCT(structName, sType) \
     private: structName m_##structName = { (sType) }; \
@@ -289,6 +402,7 @@ class DeviceInitHelp : public InitHelpBase
 
 #undef VKEFH_INSTANCE_EXTENSION
 #undef VKEFH_INSTANCE_LAYER
+#undef VKEFH_INSTANCE_FEATURE_STRUCT
 #undef VKEFH_DEVICE_EXTENSION
 #undef VKEFH_DEVICE_FEATURE_STRUCT
 
@@ -297,6 +411,7 @@ public:
     {
 #define VKEFH_INSTANCE_EXTENSION(extensionName)
 #define VKEFH_INSTANCE_LAYER(layerName)
+#define VKEFH_INSTANCE_FEATURE_STRUCT(structName, sType)
 #define VKEFH_DEVICE_EXTENSION(extensionName)   m_Extensions.m_Items.push_back({(extensionName), false, false});
 #define VKEFH_DEVICE_FEATURE_STRUCT(structName, sType)   m_FeatureStructs.push_back({(#structName), (sType), (VkBaseInStructure*)(&m_##structName), true});
 
@@ -304,6 +419,7 @@ public:
 
 #undef VKEFH_INSTANCE_EXTENSION
 #undef VKEFH_INSTANCE_LAYER
+#undef VKEFH_INSTANCE_FEATURE_STRUCT
 #undef VKEFH_DEVICE_EXTENSION
 #undef VKEFH_DEVICE_FEATURE_STRUCT
     }
@@ -359,56 +475,6 @@ public:
         return m_Features2.features;
     }
 
-    bool IsFeatureStructEnabled(const char* structName) const
-    {
-        for(size_t structIndex = 0, structCount = m_FeatureStructs.size(); structIndex < structCount; ++structIndex)
-        {
-            if(strcmp(m_FeatureStructs[structIndex].m_Name, structName) == 0)
-            {
-                return m_FeatureStructs[structIndex].m_Enabled;
-            }
-        }
-        assert(0 && "You can query only for feature structs specified in VkExtensionsFeatures.inl.");
-        return false;
-    }
-    void EnableFeatureStruct(const char* structName, bool enabled)
-    {
-        for(size_t structIndex = 0, structCount = m_FeatureStructs.size(); structIndex < structCount; ++structIndex)
-        {
-            if(strcmp(m_FeatureStructs[structIndex].m_Name, structName) == 0)
-            {
-                m_FeatureStructs[structIndex].m_Enabled = enabled;
-                return;
-            }
-        }
-        assert(0 && "You can enable only feature structs specified in VkExtensionsFeatures.inl.");
-    }
-
-    bool IsFeatureStructEnabled(VkStructureType sType) const
-    {
-        for(size_t structIndex = 0, structCount = m_FeatureStructs.size(); structIndex < structCount; ++structIndex)
-        {
-            if(m_FeatureStructs[structIndex].m_sType == sType)
-            {
-                return m_FeatureStructs[structIndex].m_Enabled;
-            }
-        }
-        assert(0 && "You can query only for feature structs specified in VkExtensionsFeatures.inl.");
-        return false;
-    }
-    void EnableFeatureStruct(VkStructureType sType, bool enabled)
-    {
-        for(size_t structIndex = 0, structCount = m_FeatureStructs.size(); structIndex < structCount; ++structIndex)
-        {
-            if(m_FeatureStructs[structIndex].m_sType == sType)
-            {
-                m_FeatureStructs[structIndex].m_Enabled = enabled;
-                return;
-            }
-        }
-        assert(0 && "You can enable only feature structs specified in VkExtensionsFeatures.inl.");
-    }
-
     void PrepareCreation()
     {
         assert(m_ExtensionsEnumerated && "You need to call EnumerateExtensions first.");
@@ -417,7 +483,7 @@ public:
         PrepareEnabledExtensionNames();
 
         assert(m_Features2.sType == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2);
-        m_Features2.pNext = NULL;
+        m_Features2.pNext = nullptr;
         for(size_t structIndex = 0, structCount = m_FeatureStructs.size(); structIndex < structCount; ++structIndex)
         {
             if(m_FeatureStructs[structIndex].m_Enabled)
@@ -439,16 +505,6 @@ public:
 
 private:
     bool m_PhysicalDeviceFeaturesQueried = false;
-
-    struct FeatureStruct
-    {
-        const char* m_Name;
-        VkStructureType m_sType;
-        VkBaseInStructure* m_StructPtr;
-        bool m_Enabled;
-    };
-    std::vector<FeatureStruct> m_FeatureStructs;
-
     VkPhysicalDeviceFeatures2 m_Features2 = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
 };
 
