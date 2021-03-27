@@ -65,10 +65,7 @@ namespace CAULDRON_VK
     {
         VkInstance instance;
 
-        // prepare existing extensions and layer names into a buffer for vkCreateInstance
-        std::vector<const char *> instance_layer_names;
-        std::vector<const char *> instance_extension_names;
-        pIp->GetExtensionNamesAndConfigs(&instance_layer_names, &instance_extension_names);
+        pIp->m_instanceInitHelp.PrepareCreation();
 
         // do create the instance
         VkInstanceCreateInfo inst_info = {};
@@ -76,10 +73,10 @@ namespace CAULDRON_VK
         inst_info.pNext = pIp->GetNext();
         inst_info.flags = 0;
         inst_info.pApplicationInfo = &app_info;
-        inst_info.enabledLayerCount = (uint32_t)instance_layer_names.size();
-        inst_info.ppEnabledLayerNames = (uint32_t)instance_layer_names.size() ? instance_layer_names.data() : NULL;
-        inst_info.enabledExtensionCount = (uint32_t)instance_extension_names.size();
-        inst_info.ppEnabledExtensionNames = instance_extension_names.data();           
+        inst_info.enabledLayerCount = pIp->m_instanceInitHelp.GetEnabledLayerCount();
+        inst_info.ppEnabledLayerNames = pIp->m_instanceInitHelp.GetEnabledLayerNames();
+        inst_info.enabledExtensionCount = pIp->m_instanceInitHelp.GetEnabledExtensionCount();
+        inst_info.ppEnabledExtensionNames = pIp->m_instanceInitHelp.GetEnabledExtensionNames();
         VkResult res = vkCreateInstance(&inst_info, NULL, &instance);
         assert(res == VK_SUCCESS);
 

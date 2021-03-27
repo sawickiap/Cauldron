@@ -23,60 +23,27 @@
 
 namespace CAULDRON_VK
 {    
-    bool InstanceProperties::IsLayerPresent(const char *pExtName)
-    {
-        return std::find_if(
-            m_instanceLayerProperties.begin(),
-            m_instanceLayerProperties.end(),
-            [pExtName](const VkLayerProperties& layerProps) -> bool {
-            return strcmp(layerProps.layerName, pExtName) == 0;
-        }) != m_instanceLayerProperties.end();
-    }
-
-    bool InstanceProperties::IsExtensionPresent(const char *pExtName)
-    {
-        return std::find_if(
-            m_instanceExtensionProperties.begin(),
-            m_instanceExtensionProperties.end(),
-            [pExtName](const VkExtensionProperties& extensionProps) -> bool {
-            return strcmp(extensionProps.extensionName, pExtName) == 0;
-        }) != m_instanceExtensionProperties.end();
-    }
-
     VkResult InstanceProperties::Init()
     {   
         // Query instance layers.
         //
-        uint32_t instanceLayerPropertyCount = 0;
-        VkResult res = vkEnumerateInstanceLayerProperties(&instanceLayerPropertyCount, nullptr);
-        m_instanceLayerProperties.resize(instanceLayerPropertyCount);
-        assert(res == VK_SUCCESS);        
-        if (instanceLayerPropertyCount > 0)
-        {
-            res = vkEnumerateInstanceLayerProperties(&instanceLayerPropertyCount, m_instanceLayerProperties.data());
-            assert(res == VK_SUCCESS);
-        }
+        VkResult res = m_instanceInitHelp.EnumerateLayers();
+        assert(res == VK_SUCCESS);
+        m_instanceInitHelp.EnableAllLayers(false);
 
         // Query instance extensions.
         //
-        uint32_t instanceExtensionPropertyCount = 0;
-        res = vkEnumerateInstanceExtensionProperties(nullptr, &instanceExtensionPropertyCount, nullptr);
+        res = m_instanceInitHelp.EnumerateExtensions();
         assert(res == VK_SUCCESS);
-        m_instanceExtensionProperties.resize(instanceExtensionPropertyCount);
-        if (instanceExtensionPropertyCount > 0)
-        {
-            res = vkEnumerateInstanceExtensionProperties(nullptr, &instanceExtensionPropertyCount, m_instanceExtensionProperties.data());
-            assert(res == VK_SUCCESS);
-        }
+        m_instanceInitHelp.EnableAllExtensions(false);
 
         return res;
     }
 
     bool InstanceProperties::AddInstanceLayerName(const char *instanceLayerName)
     {
-        if (IsLayerPresent(instanceLayerName))
+        if(m_instanceInitHelp.EnableLayer(instanceLayerName, true))
         {
-            m_instance_layer_names.push_back(instanceLayerName);
             return true;
         }
 
@@ -87,9 +54,8 @@ namespace CAULDRON_VK
 
     bool InstanceProperties::AddInstanceExtensionName(const char *instanceExtensionName)
     {
-        if (IsExtensionPresent(instanceExtensionName))
+        if(m_instanceInitHelp.EnableExtension(instanceExtensionName, true))
         {
-            m_instance_extension_names.push_back(instanceExtensionName);
             return true;
         }
 
@@ -97,14 +63,4 @@ namespace CAULDRON_VK
 
         return false;
     }
-
-    void  InstanceProperties::GetExtensionNamesAndConfigs(std::vector<const char *> *pInstance_layer_names, std::vector<const char *> *pInstance_extension_names)
-    {
-        for (auto &name : m_instance_layer_names)
-            pInstance_layer_names->push_back(name);
-
-        for (auto &name : m_instance_extension_names)
-            pInstance_extension_names->push_back(name);
-    }
-
 }

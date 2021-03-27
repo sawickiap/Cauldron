@@ -42,17 +42,12 @@ namespace CAULDRON_VK
 
     void ExtFreeSyncHdrCheckInstanceExtensions(InstanceProperties *pIP)
     {
-        std::vector<const char *> required_extension_names = { VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME };
-
         s_isfsHdrInstanceExtensionsPresent = true;
 
-        for (auto& ext : required_extension_names)
+        if (pIP->AddInstanceExtensionName(VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME) == false)
         {
-            if (pIP->AddInstanceExtensionName(ext) == false)
-            {
-                Trace(format("FreeSync HDR disabled, missing instance extension: %s\n", ext));
-                s_isfsHdrInstanceExtensionsPresent = false;
-            }
+            Trace(format("FreeSync HDR disabled, missing instance extension: %s\n", VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME));
+            s_isfsHdrInstanceExtensionsPresent = false;
         }
     }
 

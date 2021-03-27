@@ -31,17 +31,11 @@ namespace CAULDRON_VK
 
     bool ExtGPUValidationCheckExtensions(InstanceProperties *pIP)
     {
-        std::vector<const char *> required_extension_names = { VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME };
-
         bool bFp16Enabled = true;
-        for (auto& ext : required_extension_names)
+        if (pIP->AddInstanceExtensionName(VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME) == false)
         {
-            if (pIP->AddInstanceExtensionName(ext) == false)
-            {
-                Trace(format("GPU validation disabled, missing extension: %s\n", ext));
-                return false;
-            }
-
+            Trace(format("GPU validation disabled, missing extension: %s\n", VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME));
+            return false;
         }
 
         validationFeaturesExt.enabledValidationFeatureCount = 1;
