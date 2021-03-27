@@ -25,14 +25,11 @@ namespace CAULDRON_VK
 {
     class InstanceProperties
     {
-        void *m_pNext = NULL;
 public:
         VKEFH::InstanceInitHelp m_instanceInitHelp;
     
         VkResult Init();
         bool AddInstanceLayerName(const char *instanceLayerName);
         bool AddInstanceExtensionName(const char *instanceExtensionName);
-        void *GetNext() { return m_pNext; }
-        void SetNewNext(void *pNext) { m_pNext = pNext; }
     };
 }

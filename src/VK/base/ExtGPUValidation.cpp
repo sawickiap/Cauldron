@@ -25,9 +25,7 @@
 
 namespace CAULDRON_VK
 {
-    static VkValidationFeaturesEXT validationFeaturesExt = { VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT };
     static VkValidationFeatureEnableEXT enabledValidationFeatures[] = { VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT };
-
 
     bool ExtGPUValidationCheckExtensions(InstanceProperties *pIP)
     {
@@ -37,11 +35,10 @@ namespace CAULDRON_VK
             Trace(format("GPU validation disabled, missing extension: %s\n", VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME));
             return false;
         }
-
-        validationFeaturesExt.enabledValidationFeatureCount = 1;
-        validationFeaturesExt.pEnabledValidationFeatures = enabledValidationFeatures;
-        validationFeaturesExt.pNext = pIP->GetNext();
-        pIP->SetNewNext(&validationFeaturesExt);
+        
+        pIP->m_instanceInitHelp.GetVkValidationFeaturesEXT().enabledValidationFeatureCount = 1;
+        pIP->m_instanceInitHelp.GetVkValidationFeaturesEXT().pEnabledValidationFeatures = enabledValidationFeatures;
+        pIP->m_instanceInitHelp.EnableFeatureStruct(VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT, true);
 
         return true;
     }

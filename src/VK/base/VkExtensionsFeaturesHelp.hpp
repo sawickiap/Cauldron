@@ -170,6 +170,13 @@ public:
         }
         assert(0 && "You can enable only feature structs specified in VkExtensionsFeatures.inl.");
     }
+    void EnableAllFeatureStructs(bool enabled)
+    {
+        for(size_t i = 0, count = m_FeatureStructs.size(); i < count; ++i)
+        {
+            m_FeatureStructs[i].m_Enabled = false;
+        }
+    }
 
 protected:
     bool m_ExtensionsEnumerated = false;
@@ -333,14 +340,14 @@ public:
         
         m_Layers.PrepareEnabled();
         
-        m_CreationPNext = nullptr;
+        m_FeaturesChain = nullptr;
         for(size_t structIndex = 0, structCount = m_FeatureStructs.size(); structIndex < structCount; ++structIndex)
         {
             if(m_FeatureStructs[structIndex].m_Enabled)
             {
                 assert(m_FeatureStructs[structIndex].m_StructPtr->sType == m_FeatureStructs[structIndex].m_sType);
-                m_FeatureStructs[structIndex].m_StructPtr->pNext = m_CreationPNext;
-                m_CreationPNext = m_FeatureStructs[structIndex].m_StructPtr;
+                m_FeatureStructs[structIndex].m_StructPtr->pNext = m_FeaturesChain;
+                m_FeaturesChain = m_FeatureStructs[structIndex].m_StructPtr;
             }
         }
 
@@ -357,16 +364,16 @@ public:
         assert(m_CreationPrepared && "You need to call PrepareCreation first.");
         return !m_Layers.m_EnabledItemNames.empty() ? m_Layers.m_EnabledItemNames.data() : nullptr;
     }
-    const void* GetCreationPNext() const
+    const void* GetFeaturesChain() const
     {
         assert(m_CreationPrepared && "You need to call PrepareCreation first.");
-        return m_CreationPNext;
+        return m_FeaturesChain;
     }
 
 private:
     bool m_LayersEnumerated = false;
     EnabledItemVector m_Layers;
-    VkBaseInStructure* m_CreationPNext = nullptr;
+    VkBaseInStructure* m_FeaturesChain = nullptr;
 
     void LoadLayers(const VkLayerProperties* layerProps, size_t layerPropCount)
     {

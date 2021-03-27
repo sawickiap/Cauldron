@@ -49,7 +49,6 @@ namespace CAULDRON_VK
     }
 
     VkValidationFeatureEnableEXT enables[] = { VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT };
-    VkValidationFeaturesEXT features = {};
 
     const char instanceExtensionName[] = VK_EXT_DEBUG_REPORT_EXTENSION_NAME;
     const char instanceLayerName[] = "VK_LAYER_KHRONOS_validation";
@@ -59,12 +58,9 @@ namespace CAULDRON_VK
         s_bCanUseDebugReport = pIP->AddInstanceLayerName(instanceLayerName) && pIP->AddInstanceExtensionName(instanceExtensionName);
         if (s_bCanUseDebugReport)
         {
-            features.sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
-            features.pNext = pIP->GetNext();
-            features.enabledValidationFeatureCount = 1;
-            features.pEnabledValidationFeatures = enables;
-
-            pIP->SetNewNext(&features);
+            pIP->m_instanceInitHelp.GetVkValidationFeaturesEXT().enabledValidationFeatureCount = 1;
+            pIP->m_instanceInitHelp.GetVkValidationFeaturesEXT().pEnabledValidationFeatures = enables;
+            pIP->m_instanceInitHelp.EnableFeatureStruct(VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT, true);
         }
 
         return s_bCanUseDebugReport;

@@ -37,6 +37,8 @@ namespace CAULDRON_VK
         assert(res == VK_SUCCESS);
         m_instanceInitHelp.EnableAllExtensions(false);
 
+        m_instanceInitHelp.EnableAllFeatureStructs(false);
+
         return res;
     }
 

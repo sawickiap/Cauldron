@@ -70,7 +70,7 @@ namespace CAULDRON_VK
         // do create the instance
         VkInstanceCreateInfo inst_info = {};
         inst_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-        inst_info.pNext = pIp->GetNext();
+        inst_info.pNext = pIp->m_instanceInitHelp.GetFeaturesChain();
         inst_info.flags = 0;
         inst_info.pApplicationInfo = &app_info;
         inst_info.enabledLayerCount = pIp->m_instanceInitHelp.GetEnabledLayerCount();
