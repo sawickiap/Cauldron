@@ -229,7 +229,6 @@ namespace CAULDRON_VK
         device_info.pQueueCreateInfos = queue_info;
         device_info.enabledExtensionCount = pDp->m_deviceInitHelp.GetEnabledExtensionCount();
         device_info.ppEnabledExtensionNames = pDp->m_deviceInitHelp.GetEnabledExtensionNames();
-        device_info.pEnabledFeatures = NULL;
         res = vkCreateDevice(m_physicaldevice, &device_info, NULL, &m_device);
         assert(res == VK_SUCCESS);
 

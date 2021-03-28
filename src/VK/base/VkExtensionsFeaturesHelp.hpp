@@ -1,7 +1,44 @@
+/*
+VkExtensionsFeaturesHelp - Small header-only C++ library that helps to initialize Vulkan instance and device object
+
+Author:  Adam Sawicki - https://asawicki.info - adam__DELETE__@asawicki.info
+Version: 1.0.0, 2021-03-28
+License: MIT
+
+Documentation: see README.md and other .md files in the repository or online on GitHub:
+https://github.com/sawickiap/VkExtensionsFeaturesHelp
+
+# Version history
+
+Version 1.0.0, 2021-03-28
+
+    First version.
+
+# License
+
+Copyright 2021 Adam Sawicki
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
 #pragma once
 
 #include <vector>
-#include <algorithm>
 #include <cstdint>
 #include <cassert>
 #include <cstring>
@@ -9,15 +46,14 @@
 namespace VKEFH
 {
 
-struct EnabledItem
-{
-    const char* m_Name;
-    bool m_Supported, m_Enabled;
-};
-
 class EnabledItemVector
 {
 public:
+    struct EnabledItem
+    {
+        const char* m_Name;
+        bool m_Supported, m_Enabled;
+    };
     std::vector<EnabledItem> m_Items;
     std::vector<const char*> m_EnabledItemNames;
 
@@ -163,11 +199,12 @@ public:
         }
         assert(0 && "You can enable only feature structs specified in VkExtensionsFeatures.inl.");
     }
+
     void EnableAllFeatureStructs(bool enabled)
     {
         for(size_t i = 0, count = m_FeatureStructs.size(); i < count; ++i)
         {
-            m_FeatureStructs[i].m_Enabled = false;
+            m_FeatureStructs[i].m_Enabled = enabled;
         }
     }
 
@@ -208,6 +245,7 @@ protected:
         m_Extensions.PrepareEnabled();
     }
 
+private:
     size_t FindFeatureStruct(const char* name) const
     {
         for(size_t i = 0, count = m_FeatureStructs.size(); i < count; ++i)
@@ -507,6 +545,5 @@ private:
     bool m_PhysicalDeviceFeaturesQueried = false;
     VkPhysicalDeviceFeatures2 m_Features2 = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
 };
-
 
 } // namespace VKEFH
